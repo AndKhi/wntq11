@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPY Position and Return</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            transition: background-color 0.3s;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            width: 100%;
+            max-width: 700px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 300px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        #chartContainer {
+            width: 100%;
+            max-width: 300px;
+        }
+        #chart {
+            width: 100%;
+            height: 300px;
+        }
+        .loading {
+            color: #555;
+        }
+        /* Background colors for different positions */
+        .long-position-background {
+            background-color: #b3e6b3; /* Darker green */
+        }
+        .short-position-background {
+            background-color: #f4b3b3; /* Darker red */
+        }
+        .flat-position-background {
+            background-color: #ffffff; /* White for flat position */
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body id="pageBackground">
+    <h1>SPY Position and Return</h1>
+    <p id="status" class="loading">Loading data...</p>
+
+    <div id="contentContainer" class="container">
+        <table id="positionTable" style="display:none;">
+            <tr>
+                <th>Position</th>
+                <td id="positionText"></td>
+            </tr>
+            <tr>
+                <th>Since</th>
+                <td id="date"></td>
+            </tr>
+            <tr>
+                <th>Entry Level</th>
+                <td id="entryLevel"></td>
+            </tr>
+            <tr>
+                <th>Current Price</th>
+                <td id="currentPrice"></td>
+            </tr>
+            <tr>
+                <th>Current Return (%)</th>
+                <td id="currentReturn"></td>
+            </tr>
+        </table>
+        <div id="chartContainer">
+            <canvas id="chart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        async function fetchPositionAndReturn() {
+            try {
+                // Define the position data directly in the code
+                const positionData = {
+                    position_code: 1,       // 1 = long, -1 = short, 0 = flat
+                    date: "01.11.2024",     // Entry date
+                    entry_level: 571.04     // Entry level of SPY
+                };
+
+                // Extract position details from the object
+                const { position_code, date, entry_level } = positionData;
+                const position = position_code;
+                const entryLevel = parseFloat(entry_level);
+
+                // Set background color for the page based on position
+                const pageBackground = document.getElementById("pageBackground");
+                if (position === 1) {
+                    pageBackground.classList.add("long-position-background");
+                } else if (position === -1) {
+                    pageBackground.classList.add("short-position-background");
+                } else {
+                    pageBackground.classList.add("flat-position-background");
+                }
+
+                if (position === 0) {
+                    document.getElementById("status").innerText = "S&P position is FLAT.";
+                    return;
+                }
+
+                // Fetch the latest price of SPY using the CORS proxy
+                const apiKey = "519cfe25a041420fb45a99dbb3ffa032";
+                const responseTwelveData = await fetch(`https://cors-anywhere.herokuapp.com/https://api.twelvedata.com/price?symbol=SPY&apikey=${apiKey}`);
+                
+                // Check if the response is successful
+                if (!responseTwelveData.ok) {
+                    throw new Error(`HTTP error! Status: ${responseTwelveData.status}`);
+                }
+
+                // Parse JSON response
+                const data = await responseTwelveData.json();
+
+                // Check if the 'price' field is present
+                if (!data.price) {
+                    throw new Error("Price data not found in response");
+                }
+
+                const currentPrice = parseFloat(data.price);
+
+                // Calculate return based on position
+                let returnPercentage = 0;
+                if (position === 1) { // Long
+                    returnPercentage = ((currentPrice - entryLevel) / entryLevel) * 100;
+                } else if (position === -1) { // Short
+                    returnPercentage = ((entryLevel - currentPrice) / entryLevel) * 100;
+                }
+
+                // Display return and position information in the table
+                const positionText = position === 1 ? 'LONG' : 'SHORT';
+                document.getElementById("positionText").innerText = positionText;
+                document.getElementById("date").innerText = date;
+                document.getElementById("entryLevel").innerText = `$${entryLevel}`;
+                document.getElementById("currentPrice").innerText = `$${currentPrice.toFixed(2)}`;
+                document.getElementById("currentReturn").innerText = `${returnPercentage.toFixed(2)}%`;
+
+                // Show the table and hide the loading text
+                document.getElementById("positionTable").style.display = "table";
+                document.getElementById("status").style.display = "none";
+
+                // Plot return on bar chart with improved formatting
+                new Chart(document.getElementById('chart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Return'],
+                        datasets: [{
+                            label: `S&P 500 Position (${positionText})`,
+                            data: [returnPercentage],
+                            backgroundColor: returnPercentage >= 0 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)',
+                            borderColor: 'rgba(0, 0, 0, 0.1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { 
+                                beginAtZero: true, 
+                                title: { display: true, text: 'Return (%)' },
+                                ticks: {
+                                    callback: function(value) { return value + '%'; }
+                                }
+                            }
+                        },
+                        plugins: { 
+                            legend: { display: true },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Return: ${context.raw.toFixed(2)}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                document.getElementById("status").innerText = `Error fetching data: ${error.message}`;
+                console.error("Fetch error:", error);
+            }
+        }
+
+        fetchPositionAndReturn();
+    </script>
+</body>
+</html>
