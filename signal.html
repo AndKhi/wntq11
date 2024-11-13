@@ -1,180 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Model Display & Pose Animation</title>
-  <style>
-    body {
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #222;
-    }
-    #renderer-container {
-      width: 640px;
-      height: 480px;
-      border: 1px solid #ccc;
-      background-color: #000;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPY Position and Return</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            transition: background-color 0.3s;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+            max-width: 500px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 1.2em; /* Increase font size for the table */
+            font-weight: bold; /* Make font bold */
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        /* Larger font size for Position and Current Return */
+        #positionText, #currentReturn {
+            font-size: 1.4em;
+        }
+        /* Background colors for different positions */
+        .long-position-background {
+            background-color: #b3e6b3; /* Darker green */
+        }
+        .short-position-background {
+            background-color: #f4b3b3; /* Darker red */
+        }
+        .flat-position-background {
+            background-color: #ffffff; /* White for flat position */
+        }
+        /* Colors for return percentage */
+        .positive-return {
+            color: #008000; /* Bright green for positive return */
+        }
+        .negative-return {
+            color: #ff0000; /* Bright red for negative return */
+        }
+        .neutral-return {
+            color: #000000; /* Black for neutral return */
+        }
+    </style>
 </head>
-<body>
-  <h1>PoseNet & 3D Character Animation</h1>
+<body id="pageBackground">
+    <h1>SPY AI TRADER</h1>
+    <p id="status" class="loading">Loading data...</p>
 
-  <!-- Поле для ввода IP-адреса сервера -->
-  <label for="serverIp">Enter Server IP:</label>
-  <input type="text" id="serverIp" placeholder="Enter server IP (e.g., 192.168.1.5)" />
-  <button id="connectButton">Connect to WebSocket</button>
-  <span id="connectionStatus">Not connected</span>
+    <div id="contentContainer" class="container">
+        <table id="positionTable" style="display:none;">
+            <tr>
+                <th>Position</th>
+                <td id="positionText"></td>
+            </tr>
+            <tr>
+                <th>Since</th>
+                <td id="date"></td>
+            </tr>
+            <tr>
+                <th>Entry Level</th>
+                <td id="entryLevel"></td>
+            </tr>
+            <tr>
+                <th>Current Price</th>
+                <td id="currentPrice"></td>
+            </tr>
+            <tr>
+                <th>Return (%)</th>
+                <td id="currentReturn"></td>
+            </tr>
+        </table>
+    </div>
 
-  <!-- Контейнер для рендерера Three.js -->
-  <div id="renderer-container"></div>
+    <script>
+        async function fetchPositionAndReturn() {
+            try {
+                // Define the position data directly in the code
+                const positionData = {
+                    position_code: 1,       // 1 = long, -1 = short, 0 = flat
+                    date: "01.11.2024",     // Entry date
+                    entry_level: 571.04     // Entry level of SPY
+                };
 
-  <!-- Подключаем Three.js и FBXLoader -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/FBXLoader.js"></script>
+                // Extract position details from the object
+                const { position_code, date, entry_level } = positionData;
+                const position = position_code;
+                const entryLevel = parseFloat(entry_level);
 
-  <script>
-    let socket;
-    let isConnected = false;
-    let scene, camera, renderer, model;
+                // Set background color for the page based on position
+                const pageBackground = document.getElementById("pageBackground");
+                if (position === 1) {
+                    pageBackground.classList.add("long-position-background");
+                } else if (position === -1) {
+                    pageBackground.classList.add("short-position-background");
+                } else {
+                    pageBackground.classList.add("flat-position-background");
+                }
 
-    // Инициализация Three.js и отображение модели
-    function initThreeJS() {
-      // Создаем сцену
-      scene = new THREE.Scene();
+                if (position === 0) {
+                    document.getElementById("status").innerText = "S&P position is FLAT.";
+                    return;
+                }
 
-      // Настраиваем камеру для окна 640x480
-      camera = new THREE.PerspectiveCamera(75, 640 / 480, 0.1, 1000);
-      camera.position.set(0, 1, 5);
+                // Fetch the latest price of SPY using the CORS proxy
+                const apiKey = "519cfe25a041420fb45a99dbb3ffa032";
+                const responseTwelveData = await fetch(`https://cors-anywhere.herokuapp.com/https://api.twelvedata.com/price?symbol=SPY&apikey=${apiKey}`);
+                
+                // Check if the response is successful
+                if (!responseTwelveData.ok) {
+                    throw new Error(`HTTP error! Status: ${responseTwelveData.status}`);
+                }
 
-      // Создаем рендерер с фиксированными размерами
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(640, 480);
-      document.getElementById('renderer-container').appendChild(renderer.domElement);
+                // Parse JSON response
+                const data = await responseTwelveData.json();
 
-      // Добавляем освещение
-      const ambientLight = new THREE.AmbientLight(0x404040, 5);
-      scene.add(ambientLight);
+                // Check if the 'price' field is present
+                if (!data.price) {
+                    throw new Error("Price data not found in response");
+                }
 
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-      directionalLight.position.set(5, 10, 7.5);
-      scene.add(directionalLight);
+                const currentPrice = parseFloat(data.price);
 
-      const pointLight = new THREE.PointLight(0xffffff, 1);
-      pointLight.position.set(10, 10, 10);
-      scene.add(pointLight);
+                // Calculate return based on position
+                let returnPercentage = 0;
+                if (position === 1) { // Long
+                    returnPercentage = ((currentPrice - entryLevel) / entryLevel) * 100;
+                } else if (position === -1) { // Short
+                    returnPercentage = ((entryLevel - currentPrice) / entryLevel) * 100;
+                }
 
-      // Загрузка модели FBX и отображение
-      const loader = new THREE.FBXLoader();
-      loader.load(
-        'character.fbx', // Убедитесь, что файл character.fbx находится рядом с HTML файлом
-        function(fbx) {
-          model = fbx;
-          model.scale.set(0.2, 0.2, 0.2); // Установите нужный масштаб
-          scene.add(model);
-          
-          // Вывод всех объектов и костей модели в консоль после загрузки
-          model.traverse(function (child) {
-            if (child.isBone) {
-              console.log("Bone name:", child.name); // Выводит имена всех костей
-            } else {
-              console.log("Object name:", child.name); // Выводит имена всех объектов
+                // Display return and position information in the table
+                const positionText = position === 1 ? 'LONG' : 'SHORT';
+                document.getElementById("positionText").innerText = positionText;
+                document.getElementById("date").innerText = date;
+                document.getElementById("entryLevel").innerText = `$${entryLevel}`;
+                document.getElementById("currentPrice").innerText = `$${currentPrice.toFixed(2)}`;
+                
+                // Set the color of the return based on its value
+                const currentReturnCell = document.getElementById("currentReturn");
+                currentReturnCell.innerText = `${returnPercentage.toFixed(2)}%`;
+                if (returnPercentage > 0) {
+                    currentReturnCell.classList.add("positive-return");
+                } else if (returnPercentage < 0) {
+                    currentReturnCell.classList.add("negative-return");
+                } else {
+                    currentReturnCell.classList.add("neutral-return");
+                }
+
+                // Show the table and hide the loading text
+                document.getElementById("positionTable").style.display = "table";
+                document.getElementById("status").style.display = "none";
+
+            } catch (error) {
+                document.getElementById("status").innerText = `Error fetching data: ${error.message}`;
+                console.error("Fetch error:", error);
             }
-          });
-
-          animate(); // Начинаем анимацию вращения
-        },
-        undefined,
-        function(error) {
-          console.error("Error loading model:", error); // Лог ошибок, если модель не загружается
-        }
-      );
-    }
-
-    // Анимация модели без подключения к серверу
-    function animate() {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
-    }
-
-    // Подключение к серверу WebSocket и получение координат
-    function connectToServer() {
-      const serverIp = document.getElementById('serverIp').value.trim() || 'localhost';
-      socket = new WebSocket(`ws://${serverIp}:8080`);
-      socket.onopen = () => {
-        console.log('WebSocket connection established');
-        document.getElementById('connectionStatus').textContent = 'Connected';
-        isConnected = true;
-      };
-
-      socket.onclose = () => {
-        console.log('WebSocket connection closed');
-        document.getElementById('connectionStatus').textContent = 'Disconnected';
-        isConnected = false;
-      };
-
-      socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        alert('Failed to connect to the server. Please check the IP address and try again.');
-      };
-
-      socket.onmessage = (event) => {
-        const keypointsData = JSON.parse(event.data);
-        console.log("Received keypoints data:", keypointsData); // Лог данных для отладки
-        updateModelPose(keypointsData); // Обновление позы на основе полученных данных
-      };
-    }
-
-    // Функция для обновления позы модели на основе данных WebSocket
-    function updateModelPose(keypointsData) {
-      if (!model) return;
-
-      const keypointsMap = {};
-      keypointsData.forEach(kp => {
-        keypointsMap[kp.part] = kp;
-      });
-
-      function applyPoseToBone(bone, startPoint, endPoint) {
-        if (!bone || !startPoint || !endPoint) {
-          console.log(`Bone ${bone} or points missing`); // Логирование отсутствующих элементов
-          return;
         }
 
-        const startVector = new THREE.Vector3(startPoint.x * 0.01, -startPoint.y * 0.01, 0);
-        const endVector = new THREE.Vector3(endPoint.x * 0.01, -endPoint.y * 0.01, 0);
-        
-        const direction = new THREE.Vector3().subVectors(endVector, startVector).normalize();
-        bone.lookAt(direction);
-        console.log(`Updated bone ${bone.name} with direction`, direction); // Логирование для отладки
-      }
-
-      // Пример привязки костей к ключевым точкам
-      applyPoseToBone(model.getObjectByName('LeftShoulder'), keypointsMap['leftShoulder'], keypointsMap['leftElbow']);
-      applyPoseToBone(model.getObjectByName('LeftElbow'), keypointsMap['leftElbow'], keypointsMap['leftWrist']);
-      applyPoseToBone(model.getObjectByName('RightShoulder'), keypointsMap['rightShoulder'], keypointsMap['rightElbow']);
-      applyPoseToBone(model.getObjectByName('RightElbow'), keypointsMap['rightElbow'], keypointsMap['rightWrist']);
-    }
-
-    // Запускаем Three.js без подключения к серверу
-    initThreeJS();
-
-    // Кнопка для подключения к серверу и начала анимации позы
-    document.getElementById('connectButton').onclick = () => {
-      if (!isConnected) {
-        connectToServer();
-      }
-    };
-
-    // Фиксируем размер окна на 640x480 и отключаем обновление при изменении размера
-    window.addEventListener('resize', () => {
-      renderer.setSize(640, 480);
-      camera.aspect = 640 / 480;
-      camera.updateProjectionMatrix();
-    });
-  </script>
+        fetchPositionAndReturn();
+    </script>
 </body>
 </html>
