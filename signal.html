@@ -123,7 +123,7 @@
 
                 // Fetch the latest price of SPY using the CORS proxy
                 const apiKey = "519cfe25a041420fb45a99dbb3ffa032";
-                const responseTwelveData = await fetch(`https://cors-anywhere.herokuapp.com/https://api.twelvedata.com/price?symbol=SPY&apikey=${apiKey}`);
+                const responseTwelveData = await fetch(`https://api.twelvedata.com/price?symbol=SPY&apikey=${apiKey}`);
                 
                 // Check if the response is successful
                 if (!responseTwelveData.ok) {
