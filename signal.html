@@ -1,182 +1,223 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPY Position and Return</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            transition: background-color 0.3s;
-        }
-        h1 {
-            color: #333;
-        }
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            width: 100%;
-            max-width: 500px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            font-size: 1.2em; /* Increase font size for the table */
-            font-weight: bold; /* Make font bold */
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-        }
-        /* Larger font size for Position and Current Return */
-        #positionText, #currentReturn {
-            font-size: 1.4em;
-        }
-        /* Background colors for different positions */
-        .long-position-background {
-            background-color: #b3e6b3; /* Darker green */
-        }
-        .short-position-background {
-            background-color: #f4b3b3; /* Darker red */
-        }
-        .flat-position-background {
-            background-color: #ffffff; /* White for flat position */
-        }
-        /* Colors for return percentage */
-        .positive-return {
-            color: #008000; /* Bright green for positive return */
-        }
-        .negative-return {
-            color: #ff0000; /* Bright red for negative return */
-        }
-        .neutral-return {
-            color: #000000; /* Black for neutral return */
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Trading Strategies</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .strategy-container {
+      border-radius: 6px;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      width: 600px;
+    }
+    .long-bg  { background: #d9f5d9; }
+    .short-bg { background: #fcd1d1; }
+    .flat-bg  { background: #ffffff; }
+    .content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0;
+    }
+    table {
+      font-size: 0.9em;
+      border-collapse: collapse;
+      width: 50%;
+    }
+    th, td {
+      text-align: left;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+    }
+    .positive-return { color: green; font-weight: bold; }
+    .negative-return { color: red; font-weight: bold; }
+    .neutral-return  { color: black; }
+    canvas {
+      width: 240px !important;
+      height: 180px !important;
+    }
+    h1 {
+      margin-bottom: 30px;
+    }
+    h2 {
+      margin: 6px 0 12px;
+      font-size: 1.1em;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body id="pageBackground">
-    <h1>SPY AI TRADER</h1>
-    <p id="status" class="loading">Loading data...</p>
+<body>
+  <h1>AI Trading Strategies</h1>
+  <div id="strategies"></div>
 
-    <div id="contentContainer" class="container">
-        <table id="positionTable" style="display:none;">
-            <tr>
-                <th>Position</th>
-                <td id="positionText"></td>
-            </tr>
-            <tr>
-                <th>Since</th>
-                <td id="date"></td>
-            </tr>
-            <tr>
-                <th>Entry Level</th>
-                <td id="entryLevel"></td>
-            </tr>
-            <tr>
-                <th>Current Price</th>
-                <td id="currentPrice"></td>
-            </tr>
-            <tr>
-                <th>Return (%)</th>
-                <td id="currentReturn"></td>
-            </tr>
-        </table>
-    </div>
+  <script>
+    const today = new Date().toISOString().split('T')[0];
 
-    <script>
-        async function fetchPositionAndReturn() {
-            try {
-                // Define the position data directly in the code
-                const positionData = {
-                    position_code: 1,       // 1 = long, -1 = short, 0 = flat
-                    date: "17.03.2025",     // Entry date
-                    entry_level: 567.15     // Entry level of SPY
-                };
+    const strategies = [
+      {
+        name: "SPY AI Trader",
+        trades: [
+          { date: "2024-10-17", ticker1: "SPY", position1: 1, entry1: 583.37, ticker2: "NONE", position2: 0, entry2: 1 },
+          { date: "2024-11-01", ticker1: "SPY", position1: 1, entry1: 571.04, ticker2: "NONE", position2: 0, entry2: 1 },
+          { date: "2024-11-15", ticker1: "SPY", position1: 1, entry1: 585.75, ticker2: "NONE", position2: 0, entry2: 1 },
+          { date: "2024-12-02", ticker1: "SPY", position1: 1, entry1: 603.63, ticker2: "NONE", position2: 0, entry2: 1 },
+          { date: "2024-12-16", ticker1: "SPY", position1: 1, entry1: 606.79, ticker2: "NONE", position2: 0, entry2: 1 },
+          { date: "2025-01-02", ticker1: "SPY", position1: 1, entry1: 584.64, ticker2: "NONE", position2: 0, entry2: 1 },
+          { date: "2025-01-15", ticker1: "SPY", position1: 1, entry1: 592.78, ticker2: "NONE", position2: 0, entry2: 1 },
+          { date: "2025-02-03", ticker1: "SPY", position1: 0, entry1: 597.77, ticker2: "NONE", position2: 0, entry2: 1 },
+          { date: "2025-02-18", ticker1: "SPY", position1: 0, entry1: 611.49, ticker2: "NONE", position2: 0, entry2: 1 },
+          { date: "2025-03-03", ticker1: "SPY", position1: 1, entry1: 583.77, ticker2: "NONE", position2: 0, entry2: 1 },
+          { date: "2025-03-17", ticker1: "SPY", position1: 1, entry1: 567.15, ticker2: "NONE", position2: 0, entry2: 1 }
+        ]
+      },
+      {
+        name: "Sector Rotation AI Trader",
+        trades: [
+          { date: "2025-01-01", ticker1: "IVW", position1: 0, entry1: 104.19, ticker2: "IVE", position2: 1, entry2: 101.51 },
+          { date: "2025-01-15", ticker1: "IVW", position1: 0, entry1: 102.91, ticker2: "IVE", position2: 1, entry2: 102.91 },
+          { date: "2025-02-01", ticker1: "IVW", position1: 0, entry1: 100.13, ticker2: "IVE", position2: 0, entry2: 100.13 },
+          { date: "2025-02-15", ticker1: "IVW", position1: 0, entry1: 100.13, ticker2: "IVE", position2: 0, entry2: 100.13 },
+          { date: "2025-03-01", ticker1: "IVW", position1: 0, entry1: 100.13, ticker2: "IVE", position2: 0, entry2: 100.13 },
+          { date: "2025-03-15", ticker1: "IVW", position1: 1, entry1: 92.45, ticker2: "IVE", position2: 0, entry2: 92.45 }
+        ]
+      }
+    ];
 
-                // Extract position details from the object
-                const { position_code, date, entry_level } = positionData;
-                const position = position_code;
-                const entryLevel = parseFloat(entry_level);
+    async function fetchPrices(tickers) {
+      const apiKey = "519cfe25a041420fb45a99dbb3ffa032";
+      const results = {};
+      for (const ticker of tickers) {
+        if (ticker === "NONE") {
+          results[ticker] = 1;
+        } else {
+          const res = await fetch(`https://api.twelvedata.com/price?symbol=${ticker}&apikey=${apiKey}`);
+          const data = await res.json();
+          results[ticker] = parseFloat(data.price);
+        }
+      }
+      return results;
+    }
 
-                // Set background color for the page based on position
-                const pageBackground = document.getElementById("pageBackground");
-                if (position === 1) {
-                    pageBackground.classList.add("long-position-background");
-                } else if (position === -1) {
-                    pageBackground.classList.add("short-position-background");
-                } else {
-                    pageBackground.classList.add("flat-position-background");
-                }
+    async function init() {
+      document.getElementById("strategies").innerHTML = "";
 
-                if (position === 0) {
-                    document.getElementById("status").innerText = "S&P position is FLAT.";
-                    return;
-                }
+      for (let index = 0; index < strategies.length; index++) {
+        const strategy = strategies[index];
+        const tickers = new Set();
+        strategy.trades.forEach(t => {
+          tickers.add(t.ticker1);
+          tickers.add(t.ticker2);
+        });
+        const prices = await fetchPrices([...tickers]);
 
-                // Fetch the latest price of SPY using the CORS proxy
-                const apiKey = "519cfe25a041420fb45a99dbb3ffa032";
-                const responseTwelveData = await fetch(`https://api.twelvedata.com/price?symbol=SPY&apikey=${apiKey}`);
-                
-                // Check if the response is successful
-                if (!responseTwelveData.ok) {
-                    throw new Error(`HTTP error! Status: ${responseTwelveData.status}`);
-                }
+        let capital = 100;
+        const returns = [0];
+        const labels = [strategy.trades[0].date];
+        const pos1 = [strategy.trades[0].position1];
+        const pos2 = [strategy.trades[0].position2];
 
-                // Parse JSON response
-                const data = await responseTwelveData.json();
-
-                // Check if the 'price' field is present
-                if (!data.price) {
-                    throw new Error("Price data not found in response");
-                }
-
-                const currentPrice = parseFloat(data.price);
-
-                // Calculate return based on position
-                let returnPercentage = 0;
-                if (position === 1) { // Long
-                    returnPercentage = ((currentPrice - entryLevel) / entryLevel) * 100;
-                } else if (position === -1) { // Short
-                    returnPercentage = ((entryLevel - currentPrice) / entryLevel) * 100;
-                }
-
-                // Display return and position information in the table
-                const positionText = position === 1 ? 'LONG' : 'SHORT';
-                document.getElementById("positionText").innerText = positionText;
-                document.getElementById("date").innerText = date;
-                document.getElementById("entryLevel").innerText = `$${entryLevel}`;
-                document.getElementById("currentPrice").innerText = `$${currentPrice.toFixed(2)}`;
-                
-                // Set the color of the return based on its value
-                const currentReturnCell = document.getElementById("currentReturn");
-                currentReturnCell.innerText = `${returnPercentage.toFixed(2)}%`;
-                if (returnPercentage > 0) {
-                    currentReturnCell.classList.add("positive-return");
-                } else if (returnPercentage < 0) {
-                    currentReturnCell.classList.add("negative-return");
-                } else {
-                    currentReturnCell.classList.add("neutral-return");
-                }
-
-                // Show the table and hide the loading text
-                document.getElementById("positionTable").style.display = "table";
-                document.getElementById("status").style.display = "none";
-
-            } catch (error) {
-                document.getElementById("status").innerText = `Error fetching data: ${error.message}`;
-                console.error("Fetch error:", error);
-            }
+        for (let i = 1; i < strategy.trades.length; i++) {
+          const prev = strategy.trades[i - 1];
+          const curr = strategy.trades[i];
+          const r1 = ((curr.entry1 - prev.entry1) / prev.entry1) * prev.position1;
+          const r2 = ((curr.entry2 - prev.entry2) / prev.entry2) * prev.position2;
+          capital *= (1 + r1 + r2);
+          returns.push(capital - 100);
+          labels.push(curr.date);
+          pos1.push(curr.position1);
+          pos2.push(curr.position2);
         }
 
-        fetchPositionAndReturn();
-    </script>
+        const last = strategy.trades.at(-1);
+        const r1 = ((prices[last.ticker1] - last.entry1) / last.entry1) * last.position1;
+        const r2 = ((prices[last.ticker2] - last.entry2) / last.entry2) * last.position2;
+        capital *= (1 + r1 + r2);
+        returns.push(capital - 100);
+        labels.push(today);
+        pos1.push(last.position1);
+        pos2.push(last.position2);
+
+        const perf = capital - 100;
+        const bg = (last.position1 === 1 || last.position2 === 1) ? "long-bg" :
+                   (last.position1 === -1 || last.position2 === -1) ? "short-bg" : "flat-bg";
+        const perfClass = perf > 0 ? "positive-return" : perf < 0 ? "negative-return" : "neutral-return";
+
+        const ticker = last.position1 !== 0 ? last.ticker1 : last.ticker2;
+        const entry = last.position1 !== 0 ? last.entry1 : last.entry2;
+        const posText = last.position1 !== 0 || last.position2 !== 0 ? "100%" : "FLAT";
+        const ret = ((prices[ticker] - entry) / entry * (last.position1 !== 0 ? last.position1 : last.position2) * 100).toFixed(2);
+        const retClass = ret > 0 ? "positive-return" : ret < 0 ? "negative-return" : "neutral-return";
+
+        const html = `
+        <div class="strategy-container ${bg}">
+          <h2>${strategy.name}</h2>
+          <div class="content">
+            <table>
+              <tr><th>Stock</th><td>${ticker}</td></tr>
+              <tr><th>Position</th><td>${posText}</td></tr>
+              <tr><th>Since</th><td>${last.date}</td></tr>
+              <tr><th>Entry Level</th><td>$${entry}</td></tr>
+              <tr><th>Current Price</th><td>$${prices[ticker].toFixed(2)}</td></tr>
+              <tr><th>As of</th><td>${today}</td></tr>
+              <tr><th>Return (%)</th><td class="${retClass}">${ret}%</td></tr>
+<tr><th>Cumulative Return (%)</th><td class="${perfClass}">${perf.toFixed(2)}%</td></tr>
+            </table>
+            <canvas id="chart${index}"></canvas>
+          </div>
+        </div>`;
+        document.getElementById("strategies").insertAdjacentHTML("beforeend", html);
+
+        new Chart(document.getElementById(`chart${index}`), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Cumulative Return (%)",
+                type: 'line',
+                data: returns,
+                borderColor: "blue",
+                fill: false,
+                yAxisID: 'y1'
+              },
+              {
+                label: last.ticker1 + " Position",
+                data: pos1,
+                backgroundColor: "rgba(54, 162, 235, 0.5)",
+                yAxisID: 'y2'
+              },
+              {
+                label: last.ticker2 + " Position",
+                data: pos2,
+                backgroundColor: "rgba(255, 99, 132, 0.5)",
+                yAxisID: 'y2'
+              }
+            ]
+          },
+          options: {
+            scales: {
+              y1: { position: "left", title: { display: true, text: "%" } },
+              y2: { position: "right", title: { display: true, text: "Position" }, grid: { drawOnChartArea: false } }
+            }
+          }
+        });
+      }
+    }
+
+    init();
+  </script>
 </body>
 </html>
