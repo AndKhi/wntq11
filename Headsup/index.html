@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Техасский Холдем</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="dealer-area">
+            <div class="dealer-cards">
+                <div class="card back"></div>
+                <div class="card back"></div>
+            </div>
+            <div class="dealer-score">Диллер: <span id="dealer-score">0</span></div>
+        </div>
+
+        <div class="community-cards">
+            <div class="card"></div>
+            <div class="card"></div>
+            <div class="card"></div>
+            <div class="card"></div>
+            <div class="card"></div>
+        </div>
+
+        <div class="player-area">
+            <div class="player-cards">
+                <div class="card"></div>
+                <div class="card"></div>
+            </div>
+            <div class="player-score">Игрок: <span id="player-score">0</span></div>
+            <div class="controls">
+                <button id="all-in">All In</button>
+                <button id="pass">Пас</button>
+                <button id="play" class="play-button">Играть</button>
+            </div>
+        </div>
+
+        <div class="result-message"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 
