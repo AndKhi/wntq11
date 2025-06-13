@@ -32,6 +32,7 @@ body {
     display: flex;
     gap: 10px;
     margin-bottom: 10px;
+    min-height: 85px;
 }
 
 .community-cards {
@@ -39,51 +40,77 @@ body {
     justify-content: center;
     gap: 10px;
     margin: 20px 0;
+    min-height: 85px;
 }
 
 .card {
     width: 55px;
     height: 85px;
-    background-color: white;
-    border-radius: 5px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 2px;
-    font-size: 14px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-    opacity: 0;
-    transform: translateY(20px);
     position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    margin: 0;
     overflow: hidden;
 }
 
-.card.visible {
-    opacity: 1;
-    transform: translateY(0);
+.card-front {
+    background-color: white;
+    transform: rotateY(180deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.card.back {
-    background-image: url('card-back.svg');
+.card-back {
+    background-image: url('cards/back.svg');
     background-size: cover;
+    transform: rotateY(0deg);
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 2px;
+}
+
+.card.visible {
+    transform: rotateY(180deg);
 }
 
 .card.empty {
     opacity: 0.3;
 }
 
-.card.winner {
-    animation: winner-pulse 1s ease-in-out infinite;
-    box-shadow: 0 0 20px #ffd700;
-    border: 3px solid #ffd700;
-    background-color: #fffdf0;
+.card.empty .card-front,
+.card.empty .card-back {
+    display: none;
 }
 
-@keyframes winner-pulse {
-    0% { transform: scale(1); box-shadow: 0 0 20px #ffd700; }
-    50% { transform: scale(1.05); box-shadow: 0 0 30px #ffd700; }
-    100% { transform: scale(1); box-shadow: 0 0 20px #ffd700; }
+.card.winner {
+    z-index: 1;
+}
+
+.card.winner .card-front {
+    animation: winner-glow 1s ease-in-out infinite;
+    border: 3px solid #ffd700;
+}
+
+@keyframes winner-glow {
+    0% { box-shadow: 0 0 20px #ffd700; }
+    50% { box-shadow: 0 0 30px #ffd700; }
+    100% { box-shadow: 0 0 20px #ffd700; }
 }
 
 .card .value {

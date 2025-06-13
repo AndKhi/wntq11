@@ -125,25 +125,23 @@ class PokerGame {
     }
 
     createCardElement(card) {
-        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
         const suits = {
-            'hearts': '♥',
-            'diamonds': '♦',
-            'clubs': '♣',
-            'spades': '♠'
+            'hearts': 'hearts',
+            'diamonds': 'diamonds',
+            'clubs': 'clubs',
+            'spades': 'spades'
         };
 
-        const colorClass = card.isRed() ? 'red' : 'black';
+        const value = values[card.value];
+        const suit = suits[card.suit];
+        const cardImage = `cards/${value}_of_${suit}.svg`;
+
         return `
-            <div class="corner top-left">
-                <span class="value ${colorClass}">${values[card.value]}</span>
-                <span class="suit ${colorClass}">${suits[card.suit]}</span>
+            <div class="card-front">
+                <img src="${cardImage}" alt="${value} of ${suit}" class="card-image">
             </div>
-            <div class="suit ${colorClass}">${suits[card.suit]}</div>
-            <div class="corner bottom-right">
-                <span class="value ${colorClass}">${values[card.value]}</span>
-                <span class="suit ${colorClass}">${suits[card.suit]}</span>
-            </div>
+            <div class="card-back"></div>
         `;
     }
 
@@ -332,6 +330,98 @@ class PokerGame {
         return { name: 'Старшая карта', rank: 0, cards: highCards };
     }
 
+    compareHands(playerRank, dealerRank) {
+        // Сначала сравниваем ранг комбинации
+        if (playerRank.rank !== dealerRank.rank) {
+            return playerRank.rank > dealerRank.rank ? 'player' : 'dealer';
+        }
+
+        // Если ранг одинаковый, сравниваем старшие карты
+        const playerCards = playerRank.cards;
+        const dealerCards = dealerRank.cards;
+
+        // Для двух пар сначала сравниваем старшую пару, потом младшую, потом кикер
+        if (playerRank.rank === 2) { // Две пары
+            const playerValues = playerCards.map(card => card.value);
+            const dealerValues = dealerCards.map(card => card.value);
+            
+            // Сравниваем старшую пару
+            if (playerValues[0] !== dealerValues[0]) {
+                return playerValues[0] > dealerValues[0] ? 'player' : 'dealer';
+            }
+            // Сравниваем младшую пару
+            if (playerValues[2] !== dealerValues[2]) {
+                return playerValues[2] > dealerValues[2] ? 'player' : 'dealer';
+            }
+            // Сравниваем кикер
+            if (playerValues[4] !== dealerValues[4]) {
+                return playerValues[4] > dealerValues[4] ? 'player' : 'dealer';
+            }
+        } else if (playerRank.rank === 1) { // Одна пара
+            const playerValues = playerCards.map(card => card.value);
+            const dealerValues = dealerCards.map(card => card.value);
+            
+            // Сравниваем пару
+            if (playerValues[0] !== dealerValues[0]) {
+                return playerValues[0] > dealerValues[0] ? 'player' : 'dealer';
+            }
+            // Сравниваем кикеры по порядку
+            for (let i = 2; i < playerValues.length; i++) {
+                if (playerValues[i] !== dealerValues[i]) {
+                    return playerValues[i] > dealerValues[i] ? 'player' : 'dealer';
+                }
+            }
+        } else if (playerRank.rank === 3) { // Тройка
+            const playerValues = playerCards.map(card => card.value);
+            const dealerValues = dealerCards.map(card => card.value);
+            
+            // Сравниваем тройку
+            if (playerValues[0] !== dealerValues[0]) {
+                return playerValues[0] > dealerValues[0] ? 'player' : 'dealer';
+            }
+            // Сравниваем кикеры по порядку
+            for (let i = 3; i < playerValues.length; i++) {
+                if (playerValues[i] !== dealerValues[i]) {
+                    return playerValues[i] > dealerValues[i] ? 'player' : 'dealer';
+                }
+            }
+        } else if (playerRank.rank === 6) { // Фулл-хаус
+            const playerValues = playerCards.map(card => card.value);
+            const dealerValues = dealerCards.map(card => card.value);
+            
+            // Сравниваем тройку
+            if (playerValues[0] !== dealerValues[0]) {
+                return playerValues[0] > dealerValues[0] ? 'player' : 'dealer';
+            }
+            // Сравниваем пару
+            if (playerValues[3] !== dealerValues[3]) {
+                return playerValues[3] > dealerValues[3] ? 'player' : 'dealer';
+            }
+        } else if (playerRank.rank === 7) { // Каре
+            const playerValues = playerCards.map(card => card.value);
+            const dealerValues = dealerCards.map(card => card.value);
+            
+            // Сравниваем каре
+            if (playerValues[0] !== dealerValues[0]) {
+                return playerValues[0] > dealerValues[0] ? 'player' : 'dealer';
+            }
+            // Сравниваем кикер
+            if (playerValues[4] !== dealerValues[4]) {
+                return playerValues[4] > dealerValues[4] ? 'player' : 'dealer';
+            }
+        } else {
+            // Для остальных комбинаций сравниваем карты по порядку
+            for (let i = 0; i < playerCards.length; i++) {
+                if (playerCards[i].value !== dealerCards[i].value) {
+                    return playerCards[i].value > dealerCards[i].value ? 'player' : 'dealer';
+                }
+            }
+        }
+
+        // Если все карты одинаковые, это ничья
+        return 'tie';
+    }
+
     async handleAllIn() {
         if (!this.isPlaying) return;
 
@@ -353,7 +443,7 @@ class PokerGame {
         const playerRank = this.getHandRank(playerHand);
         const dealerRank = this.getHandRank(dealerHand);
 
-        const winner = playerRank.rank > dealerRank.rank ? 'player' : 'dealer';
+        const winner = this.compareHands(playerRank, dealerRank);
         
         // Подсветка выигрышных карт
         const winnerRank = winner === 'player' ? playerRank : dealerRank;
@@ -395,16 +485,21 @@ class PokerGame {
 
         // Показ сообщения о результате
         const resultMessage = document.querySelector('.result-message');
-        resultMessage.textContent = `${winner === 'player' ? 'Игрок' : 'Диллер'} выиграл с комбинацией ${winner === 'player' ? playerRank.name : dealerRank.name}`;
+        if (winner === 'tie') {
+            resultMessage.textContent = 'Ничья!';
+        } else {
+            resultMessage.textContent = `${winner === 'player' ? 'Игрок' : 'Диллер'} выиграл с комбинацией ${winner === 'player' ? playerRank.name : dealerRank.name}`;
+        }
         resultMessage.classList.add('visible');
 
         if (winner === 'player') {
             this.playerScore++;
             this.dealerScore--;
-        } else {
+        } else if (winner === 'dealer') {
             this.dealerScore++;
             this.playerScore--;
         }
+        // В случае ничьей счет не меняется
 
         this.updateDisplay();
         await this.delay(5000);

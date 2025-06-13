@@ -1,0 +1,37 @@
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Временные файлы
+*.log
+*.tmp
+*.temp
+
+# Папки с зависимостями
+node_modules/
+vendor/
+
+# Файлы IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Локальные настройки
+.env
+.env.local
+
+# Файлы редакторов
+*.swp
+*.swo
+
+# Логи
+*.log
+
+# Файлы редакторов
+*.swp
+*.swo
+
+# Файлы редакторов
+*.swp
+*.swo 
