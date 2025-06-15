@@ -615,28 +615,19 @@ class PokerGame {
     updateTopScores() {
         if (!this.playerCountry) return;
         
-        // Найти, есть ли уже результат для этой страны
-        const existing = this.topScores.find(s => s.country === this.playerCountry);
+        // Добавляем новый результат
+        this.topScores.push({ 
+            country: this.playerCountry, 
+            score: this.playerScore 
+        });
         
-        // Если нет существующего результата или текущий счет лучше (больше)
-        if (!existing || this.playerScore > existing.score) {
-            if (existing) {
-                existing.score = this.playerScore;
-            } else {
-                this.topScores.push({ 
-                    country: this.playerCountry, 
-                    score: this.playerScore 
-                });
-            }
+        // Сортируем по убыванию счета и оставляем топ-3
+        this.topScores = this.topScores
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3);
             
-            // Сортируем по убыванию счета и оставляем топ-3
-            this.topScores = this.topScores
-                .sort((a, b) => b.score - a.score)
-                .slice(0, 3);
-                
-            localStorage.setItem('topScores', JSON.stringify(this.topScores));
-            this.updateLeaderboard();
-        }
+        localStorage.setItem('topScores', JSON.stringify(this.topScores));
+        this.updateLeaderboard();
     }
 }
 
