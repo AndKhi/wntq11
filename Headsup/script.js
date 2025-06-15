@@ -67,6 +67,7 @@ class PokerGame {
         this.isPlaying = false;
         this.playerCountry = '';
         this.topScores = JSON.parse(localStorage.getItem('topScores')) || [];
+        this.sessionId = Date.now().toString();
         
         // Инициализация кнопок
         const controls = document.querySelector('.controls');
@@ -613,19 +614,39 @@ class PokerGame {
     }
 
     updateTopScores() {
-        if (!this.playerCountry) return;
+        // Получаем текущий счет
+        const currentScore = this.playerScore;
         
-        // Добавляем новый результат
-        this.topScores.push({ 
-            country: this.playerCountry, 
-            score: this.playerScore 
-        });
+        // Ищем существующий результат для текущей сессии
+        const existingScoreIndex = this.topScores.findIndex(score => score.sessionId === this.sessionId);
         
-        // Сортируем по убыванию счета и оставляем топ-3
-        this.topScores = this.topScores
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 3);
-            
+        if (existingScoreIndex !== -1) {
+            // Если результат для этой сессии уже есть, обновляем его
+            this.topScores[existingScoreIndex].score = currentScore;
+        } else {
+            // Если результата для этой сессии нет, добавляем новый
+            this.topScores.push({
+                country: this.playerCountry,
+                score: currentScore,
+                sessionId: this.sessionId
+            });
+        }
+        
+        // Сортируем результаты по убыванию
+        this.topScores.sort((a, b) => b.score - a.score);
+        
+        // Оставляем только топ-3 результата
+        this.topScores = this.topScores.slice(0, 3);
+        
+        // Сохраняем в localStorage
+        localStorage.setItem('topScores', JSON.stringify(this.topScores));
+        
+        // Обновляем отображение
+        this.updateLeaderboard();
+    }
+
+    clearCurrentResults() {
+        this.topScores = [];
         localStorage.setItem('topScores', JSON.stringify(this.topScores));
         this.updateLeaderboard();
     }
