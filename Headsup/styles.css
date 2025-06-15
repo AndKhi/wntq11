@@ -259,14 +259,16 @@ button:disabled {
     transform: translate(-50%, -50%);
     background-color: rgba(0, 0, 0, 0.9);
     color: white;
-    padding: 20px;
+    padding: 15px 25px;
     border-radius: 10px;
     text-align: center;
     z-index: 1000;
+    width: fit-content;
+    height: fit-content;
     max-width: 90%;
-    width: auto;
-    height: auto;
-    min-height: auto;
+    display: inline-block;
+    white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .result-message.visible {
@@ -332,12 +334,11 @@ button:disabled {
     }
 
     .result-message {
-        width: auto;
-        max-width: 90%;
-        padding: 15px;
+        padding: 10px 20px;
         font-size: 16px;
+        white-space: normal;
+        width: auto;
         height: auto;
-        min-height: auto;
     }
 }
 
