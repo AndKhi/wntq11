@@ -65,6 +65,11 @@ class PokerGame {
         this.playerScore = 0;
         this.dealerScore = 0;
         this.isPlaying = false;
+        
+        // Инициализация кнопок
+        const controls = document.querySelector('.controls');
+        controls.classList.add('show-result');
+        
         this.setupEventListeners();
         this.showWaitingState();
     }
@@ -96,7 +101,8 @@ class PokerGame {
         
         // Показываем кнопки
         const controls = document.querySelector('.controls');
-        controls.classList.remove('hidden', 'show-result');
+        controls.classList.remove('hidden');
+        controls.classList.add('show-result');
     }
 
     showResult(message) {
@@ -114,17 +120,14 @@ class PokerGame {
         resultMessage.classList.remove('visible');
         resultMessage.textContent = '';
         
-        // Показываем кнопки All In и Пас
-        const controls = document.querySelector('.controls');
-        controls.classList.remove('show-result');
-
-        // Сбрасываем подсветку карт
-        const allCards = document.querySelectorAll('.card');
-        allCards.forEach(card => card.classList.remove('winner'));
-
         this.isPlaying = true;
-        document.getElementById('all-in').disabled = false;
-        document.getElementById('pass').disabled = false;
+        
+        // Скрываем кнопки All In и Пас
+        const allInButton = document.getElementById('all-in');
+        const passButton = document.getElementById('pass');
+        allInButton.style.display = 'none';
+        passButton.style.display = 'none';
+        
         document.getElementById('play').disabled = true;
 
         this.deck.reset();
@@ -140,6 +143,12 @@ class PokerGame {
             await this.delay(300);
             this.updateDisplay();
         }
+
+        // Показываем кнопки All In и Пас после раздачи карт
+        allInButton.style.display = 'inline-block';
+        passButton.style.display = 'inline-block';
+        allInButton.disabled = false;
+        passButton.disabled = false;
     }
 
     delay(ms) {
@@ -444,8 +453,29 @@ class PokerGame {
         return 0;
     }
 
+    handlePass() {
+        if (!this.isPlaying) return;
+        
+        this.isPlaying = false;
+        document.getElementById('play').disabled = false;
+        
+        // Скрываем кнопки All In и Пас
+        const allInButton = document.getElementById('all-in');
+        const passButton = document.getElementById('pass');
+        allInButton.style.display = 'none';
+        passButton.style.display = 'none';
+        
+        this.startNewHand();
+    }
+
     async handleAllIn() {
         if (!this.isPlaying) return;
+        
+        // Скрываем кнопки All In и Пас
+        const allInButton = document.getElementById('all-in');
+        const passButton = document.getElementById('pass');
+        allInButton.style.display = 'none';
+        passButton.style.display = 'none';
         
         // Раздача общих карт
         for (let i = 0; i < 5; i++) {
@@ -519,14 +549,10 @@ class PokerGame {
         
         this.isPlaying = false;
         document.getElementById('play').disabled = false;
-    }
-
-    handlePass() {
-        if (!this.isPlaying) return;
         
-        this.isPlaying = false;
-        document.getElementById('play').disabled = false;
-        this.startNewHand();
+        // Скрываем кнопки All In и Пас
+        const controls = document.querySelector('.controls');
+        controls.classList.remove('show-result');
     }
 }
 

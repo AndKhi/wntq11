@@ -31,9 +31,9 @@ body {
 
 .dealer-area, .player-cards-container {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 10px;
     width: 100%;
     max-width: 600px;
     position: relative;
@@ -43,23 +43,19 @@ body {
 .dealer-cards, .player-cards {
     display: flex;
     gap: 10px;
-    min-height: 85px;
     justify-content: center;
-    width: 200px;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1;
+    width: 100%;
 }
 
 .dealer-score, .player-score {
     font-size: 18px;
     font-weight: bold;
-    margin-left: 400px;
     z-index: 10;
     background-color: rgba(0, 0, 0, 0.5);
     padding: 5px 10px;
     border-radius: 5px;
+    text-align: center;
+    width: fit-content;
 }
 
 .community-cards {
@@ -211,6 +207,14 @@ body {
     z-index: 10;
 }
 
+.controls.hidden {
+    display: none;
+}
+
+.controls.show-result {
+    display: flex;
+}
+
 button {
     padding: 10px 20px;
     font-size: 18px;
@@ -232,8 +236,6 @@ button:disabled {
 
 #all-in, #pass {
     transition: all 0.3s ease;
-    opacity: 1;
-    pointer-events: auto;
 }
 
 #all-in {
@@ -247,33 +249,9 @@ button:disabled {
 
 .controls.show-result #all-in,
 .controls.show-result #pass {
-    opacity: 0;
-    pointer-events: none;
-    position: absolute;
-}
-
-.result-message {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 15px 25px;
-    border-radius: 10px;
-    text-align: center;
-    z-index: 1000;
-    width: fit-content;
-    height: fit-content;
-    max-width: 90%;
-    display: inline-block;
-    white-space: nowrap;
-    box-sizing: border-box;
-}
-
-.result-message.visible {
     opacity: 1;
-    display: block;
+    pointer-events: auto;
+    display: inline-block;
 }
 
 .play-button {
@@ -329,22 +307,8 @@ button:disabled {
     }
 
     .dealer-score, .player-score {
-        margin-left: 220px;
         font-size: 16px;
         padding: 3px 8px;
-    }
-
-    .result-message {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        padding: 10px 20px;
-        font-size: 16px;
-        white-space: normal;
-        width: fit-content;
-        height: fit-content;
-        max-width: 80%;
     }
 }
 
@@ -370,5 +334,45 @@ button:disabled {
     .dealer-score, .player-score {
         font-size: 16px;
     }
-} 
-} 
+}
+
+.result-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 1000;
+    width: fit-content;
+    height: fit-content;
+    max-width: 90%;
+    white-space: nowrap;
+    box-sizing: border-box;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.result-message.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+@media (max-width: 600px) {
+    .result-message {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 20px;
+        font-size: 16px;
+        white-space: normal;
+        width: fit-content;
+        height: fit-content;
+        max-width: 80%;
+    }
+}
