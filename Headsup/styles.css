@@ -253,22 +253,18 @@ button:disabled {
 }
 
 .result-message {
-    position: absolute;
-    top: 0;
+    position: fixed;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.8);
-    padding: 15px 30px;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 20px;
     border-radius: 10px;
     text-align: center;
-    font-size: 20px;
-    opacity: 0;
-    transition: all 0.3s ease;
-    pointer-events: none;
-    z-index: 100;
-    width: 100%;
-    max-width: 400px;
-    display: none;
+    z-index: 1000;
+    max-width: 90%;
+    width: auto;
 }
 
 .result-message.visible {
@@ -334,9 +330,10 @@ button:disabled {
     }
 
     .result-message {
+        width: auto;
+        max-width: 90%;
+        padding: 15px;
         font-size: 16px;
-        padding: 10px 20px;
-        bottom: 10px;
     }
 }
 
