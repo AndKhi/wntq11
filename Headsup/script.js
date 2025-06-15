@@ -65,6 +65,8 @@ class PokerGame {
         this.playerScore = 0;
         this.dealerScore = 0;
         this.isPlaying = false;
+        this.playerCountry = '';
+        this.topScores = JSON.parse(localStorage.getItem('topScores')) || [];
         
         // Инициализация кнопок
         const controls = document.querySelector('.controls');
@@ -72,6 +74,8 @@ class PokerGame {
         
         this.setupEventListeners();
         this.showWaitingState();
+        this.getPlayerCountry();
+        this.updateLeaderboard();
     }
 
     setupEventListeners() {
@@ -236,6 +240,7 @@ class PokerGame {
         // Обновление счета
         document.getElementById('player-score').textContent = this.playerScore;
         document.getElementById('dealer-score').textContent = this.dealerScore;
+        this.updateTopScores();
     }
 
     getHandRank(cards) {
@@ -557,6 +562,81 @@ class PokerGame {
         // Скрываем кнопки All In и Пас
         const controls = document.querySelector('.controls');
         controls.classList.remove('show-result');
+    }
+
+    async getPlayerCountry() {
+        try {
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            this.playerCountry = data.country_code.toLowerCase();
+            console.log('Получена страна:', this.playerCountry);
+            this.updatePlayerInfo();
+        } catch (error) {
+            console.error('Ошибка при определении страны:', error);
+        }
+    }
+
+    updatePlayerInfo() {
+        const playerScore = document.querySelector('.player-score');
+        if (this.playerCountry) {
+            playerScore.innerHTML = `Игрок <img src="https://flagcdn.com/w20/${this.playerCountry}.png" srcset="https://flagcdn.com/w40/${this.playerCountry}.png 2x" width="20" alt="${this.playerCountry.toUpperCase()}">: <span id="player-score">${this.playerScore}</span>`;
+        }
+    }
+
+    updateLeaderboard() {
+        const topScoresContainer = document.getElementById('top-scores');
+        topScoresContainer.innerHTML = '';
+        
+        // Если нет результатов
+        if (this.topScores.length === 0) {
+            const noScores = document.createElement('div');
+            noScores.className = 'top-score';
+            noScores.textContent = 'Пока нет результатов';
+            topScoresContainer.appendChild(noScores);
+            return;
+        }
+        
+        this.topScores
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3)
+            .forEach((score, index) => {
+                const scoreElement = document.createElement('div');
+                scoreElement.className = 'top-score';
+                scoreElement.innerHTML = `
+                    ${index + 1}. <img src="https://flagcdn.com/w20/${score.country}.png" 
+                        srcset="https://flagcdn.com/w40/${score.country}.png 2x" 
+                        width="20" alt="${score.country.toUpperCase()}"> 
+                    ${score.score}
+                `;
+                topScoresContainer.appendChild(scoreElement);
+            });
+    }
+
+    updateTopScores() {
+        if (!this.playerCountry) return;
+        
+        // Найти, есть ли уже результат для этой страны
+        const existing = this.topScores.find(s => s.country === this.playerCountry);
+        
+        // Если нет существующего результата или текущий счет лучше (больше)
+        if (!existing || this.playerScore > existing.score) {
+            if (existing) {
+                existing.score = this.playerScore;
+            } else {
+                this.topScores.push({ 
+                    country: this.playerCountry, 
+                    score: this.playerScore 
+                });
+            }
+            
+            // Сортируем по убыванию счета и оставляем топ-3
+            this.topScores = this.topScores
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 3);
+                
+            localStorage.setItem('topScores', JSON.stringify(this.topScores));
+            this.updateLeaderboard();
+        }
     }
 }
 
