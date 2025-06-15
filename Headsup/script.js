@@ -115,6 +115,10 @@ class PokerGame {
     }
 
     async startNewHand() {
+        // Удаляем подсветку со всех карт
+        const allCards = document.querySelectorAll('.card');
+        allCards.forEach(card => card.classList.remove('winner'));
+
         // Скрываем сообщение о результате
         const resultMessage = document.querySelector('.result-message');
         resultMessage.classList.remove('visible');
