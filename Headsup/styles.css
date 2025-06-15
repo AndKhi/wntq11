@@ -265,6 +265,8 @@ button:disabled {
     z-index: 1000;
     max-width: 90%;
     width: auto;
+    height: auto;
+    min-height: auto;
 }
 
 .result-message.visible {
@@ -334,6 +336,8 @@ button:disabled {
         max-width: 90%;
         padding: 15px;
         font-size: 16px;
+        height: auto;
+        min-height: auto;
     }
 }
 
