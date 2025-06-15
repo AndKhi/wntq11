@@ -96,10 +96,32 @@ class PokerGame {
         
         // Показываем кнопки
         const controls = document.querySelector('.controls');
-        controls.classList.remove('hidden');
+        controls.classList.remove('hidden', 'show-result');
+    }
+
+    showResult(message) {
+        const resultMessage = document.querySelector('.result-message');
+        resultMessage.textContent = message;
+        resultMessage.classList.add('visible');
+        
+        const controls = document.querySelector('.controls');
+        controls.classList.add('show-result');
     }
 
     async startNewHand() {
+        // Скрываем сообщение о результате
+        const resultMessage = document.querySelector('.result-message');
+        resultMessage.classList.remove('visible');
+        resultMessage.textContent = '';
+        
+        // Показываем кнопки All In и Пас
+        const controls = document.querySelector('.controls');
+        controls.classList.remove('show-result');
+
+        // Сбрасываем подсветку карт
+        const allCards = document.querySelectorAll('.card');
+        allCards.forEach(card => card.classList.remove('winner'));
+
         this.isPlaying = true;
         document.getElementById('all-in').disabled = false;
         document.getElementById('pass').disabled = false;
@@ -333,7 +355,7 @@ class PokerGame {
     compareHands(playerRank, dealerRank) {
         // Сначала сравниваем ранг комбинации
         if (playerRank.rank !== dealerRank.rank) {
-            return playerRank.rank > dealerRank.rank ? 'player' : 'dealer';
+            return playerRank.rank > dealerRank.rank ? 1 : -1;
         }
 
         // Если ранг одинаковый, сравниваем старшие карты
@@ -347,15 +369,15 @@ class PokerGame {
             
             // Сравниваем старшую пару
             if (playerValues[0] !== dealerValues[0]) {
-                return playerValues[0] > dealerValues[0] ? 'player' : 'dealer';
+                return playerValues[0] > dealerValues[0] ? 1 : -1;
             }
             // Сравниваем младшую пару
             if (playerValues[2] !== dealerValues[2]) {
-                return playerValues[2] > dealerValues[2] ? 'player' : 'dealer';
+                return playerValues[2] > dealerValues[2] ? 1 : -1;
             }
             // Сравниваем кикер
             if (playerValues[4] !== dealerValues[4]) {
-                return playerValues[4] > dealerValues[4] ? 'player' : 'dealer';
+                return playerValues[4] > dealerValues[4] ? 1 : -1;
             }
         } else if (playerRank.rank === 1) { // Одна пара
             const playerValues = playerCards.map(card => card.value);
@@ -363,12 +385,12 @@ class PokerGame {
             
             // Сравниваем пару
             if (playerValues[0] !== dealerValues[0]) {
-                return playerValues[0] > dealerValues[0] ? 'player' : 'dealer';
+                return playerValues[0] > dealerValues[0] ? 1 : -1;
             }
             // Сравниваем кикеры по порядку
             for (let i = 2; i < playerValues.length; i++) {
                 if (playerValues[i] !== dealerValues[i]) {
-                    return playerValues[i] > dealerValues[i] ? 'player' : 'dealer';
+                    return playerValues[i] > dealerValues[i] ? 1 : -1;
                 }
             }
         } else if (playerRank.rank === 3) { // Тройка
@@ -377,12 +399,12 @@ class PokerGame {
             
             // Сравниваем тройку
             if (playerValues[0] !== dealerValues[0]) {
-                return playerValues[0] > dealerValues[0] ? 'player' : 'dealer';
+                return playerValues[0] > dealerValues[0] ? 1 : -1;
             }
             // Сравниваем кикеры по порядку
             for (let i = 3; i < playerValues.length; i++) {
                 if (playerValues[i] !== dealerValues[i]) {
-                    return playerValues[i] > dealerValues[i] ? 'player' : 'dealer';
+                    return playerValues[i] > dealerValues[i] ? 1 : -1;
                 }
             }
         } else if (playerRank.rank === 6) { // Фулл-хаус
@@ -391,11 +413,11 @@ class PokerGame {
             
             // Сравниваем тройку
             if (playerValues[0] !== dealerValues[0]) {
-                return playerValues[0] > dealerValues[0] ? 'player' : 'dealer';
+                return playerValues[0] > dealerValues[0] ? 1 : -1;
             }
             // Сравниваем пару
             if (playerValues[3] !== dealerValues[3]) {
-                return playerValues[3] > dealerValues[3] ? 'player' : 'dealer';
+                return playerValues[3] > dealerValues[3] ? 1 : -1;
             }
         } else if (playerRank.rank === 7) { // Каре
             const playerValues = playerCards.map(card => card.value);
@@ -403,33 +425,29 @@ class PokerGame {
             
             // Сравниваем каре
             if (playerValues[0] !== dealerValues[0]) {
-                return playerValues[0] > dealerValues[0] ? 'player' : 'dealer';
+                return playerValues[0] > dealerValues[0] ? 1 : -1;
             }
             // Сравниваем кикер
             if (playerValues[4] !== dealerValues[4]) {
-                return playerValues[4] > dealerValues[4] ? 'player' : 'dealer';
+                return playerValues[4] > dealerValues[4] ? 1 : -1;
             }
         } else {
             // Для остальных комбинаций сравниваем карты по порядку
             for (let i = 0; i < playerCards.length; i++) {
                 if (playerCards[i].value !== dealerCards[i].value) {
-                    return playerCards[i].value > dealerCards[i].value ? 'player' : 'dealer';
+                    return playerCards[i].value > dealerCards[i].value ? 1 : -1;
                 }
             }
         }
 
         // Если все карты одинаковые, это ничья
-        return 'tie';
+        return 0;
     }
 
     async handleAllIn() {
         if (!this.isPlaying) return;
-
-        // Скрываем кнопки
-        const controls = document.querySelector('.controls');
-        controls.classList.add('hidden');
-
-        // Раздача общих карт с анимацией
+        
+        // Раздача общих карт
         for (let i = 0; i < 5; i++) {
             this.communityCards.push(this.deck.deal());
             await this.delay(300);
@@ -437,16 +455,12 @@ class PokerGame {
         }
 
         // Определение победителя
-        const playerHand = [...this.playerCards, ...this.communityCards];
-        const dealerHand = [...this.dealerCards, ...this.communityCards];
-        
-        const playerRank = this.getHandRank(playerHand);
-        const dealerRank = this.getHandRank(dealerHand);
+        const playerRank = this.getHandRank([...this.playerCards, ...this.communityCards]);
+        const dealerRank = this.getHandRank([...this.dealerCards, ...this.communityCards]);
+        const result = this.compareHands(playerRank, dealerRank);
 
-        const winner = this.compareHands(playerRank, dealerRank);
-        
         // Подсветка выигрышных карт
-        const winnerRank = winner === 'player' ? playerRank : dealerRank;
+        const winnerRank = result > 0 ? playerRank : dealerRank;
         const allCards = document.querySelectorAll('.card');
         allCards.forEach(card => card.classList.remove('winner'));
         
@@ -483,39 +497,36 @@ class PokerGame {
             }
         });
 
-        // Показ сообщения о результате
-        const resultMessage = document.querySelector('.result-message');
-        if (winner === 'tie') {
-            resultMessage.textContent = 'Ничья!';
-        } else {
-            resultMessage.textContent = `${winner === 'player' ? 'Игрок' : 'Диллер'} выиграл с комбинацией ${winner === 'player' ? playerRank.name : dealerRank.name}`;
-        }
-        resultMessage.classList.add('visible');
-
-        if (winner === 'player') {
+        // Обновление счета
+        if (result > 0) {
             this.playerScore++;
             this.dealerScore--;
-        } else if (winner === 'dealer') {
+        } else if (result < 0) {
             this.dealerScore++;
             this.playerScore--;
         }
-        // В случае ничьей счет не меняется
 
-        this.updateDisplay();
-        await this.delay(5000);
+        // Показ результата
+        let message = '';
+        if (result > 0) {
+            message = `Вы выиграли с комбинацией ${playerRank.name}!`;
+        } else if (result < 0) {
+            message = `Дилер выиграл с комбинацией ${dealerRank.name}!`;
+        } else {
+            message = 'Ничья!';
+        }
+        this.showResult(message);
         
-        // Скрываем сообщение о результате
-        resultMessage.classList.remove('visible');
-        
-        // Показываем кнопки
-        controls.classList.remove('hidden');
-        
-        this.showWaitingState();
+        this.isPlaying = false;
+        document.getElementById('play').disabled = false;
     }
 
     handlePass() {
         if (!this.isPlaying) return;
-        this.showWaitingState();
+        
+        this.isPlaying = false;
+        document.getElementById('play').disabled = false;
+        this.startNewHand();
     }
 }
 
