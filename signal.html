@@ -171,7 +171,9 @@
         const prices = await fetchPrices([...tickers]);
 
         let capital = 100;
+        let b_capital = 100;
         const returns = [0];
+        const b_returns = [0];
         const labels = [strategy.trades[0].date];
         const pos1 = [strategy.trades[0].position1];
         const pos2 = [strategy.trades[0].position2];
@@ -181,8 +183,11 @@
           const curr = strategy.trades[i];
           const r1 = ((curr.entry1 - prev.entry1) / prev.entry1) * prev.position1;
           const r2 = ((curr.entry2 - prev.entry2) / prev.entry2) * prev.position2;
+          const rb = ((curr.entry1 - prev.entry1) / prev.entry1);
           capital *= (1 + r1 + r2);
+          b_capital *= (1 + rb);
           returns.push(capital - 100);
+          b_returns.push(b_capital - 100);
           labels.push(curr.date);
           pos1.push(curr.position1);
           pos2.push(curr.position2);
@@ -191,8 +196,11 @@
         const last = strategy.trades.at(-1);
         const r1 = ((prices[last.ticker1] - last.entry1) / last.entry1) * last.position1;
         const r2 = ((prices[last.ticker2] - last.entry2) / last.entry2) * last.position2;
+        const rb = ((prices[last.ticker1] - last.entry1) / last.entry1);
         capital *= (1 + r1 + r2);
+        b_capital *= (1 + rb);
         returns.push(capital - 100);
+        b_returns.push(b_capital - 100);
         labels.push(today);
         pos1.push(last.position1);
         pos2.push(last.position2);
@@ -241,6 +249,14 @@
                 yAxisID: 'y1'
               },
               {
+                label: "Benchmark (%)",
+                type: 'line',
+                data: b_returns,
+                borderColor: "red",
+                fill: false,
+                yAxisID: 'y1'
+              },
+              {
                 label: last.ticker1 + " Position",
                 data: pos1,
                 backgroundColor: "rgba(54, 162, 235, 0.5)",
@@ -268,6 +284,7 @@
   </script>
 </body>
 </html>
+
 
 
 
