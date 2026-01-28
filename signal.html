@@ -173,6 +173,13 @@
     async function init() {
       document.getElementById("strategies").innerHTML = "";
 
+      // --- Benchmark series: take from the first strategy (assumed SPY) ---
+      const benchmarkStrategy = strategies[0];
+      const benchTicker = benchmarkStrategy.trades[0].ticker1; // usually "SPY"
+
+      // Map date -> benchmark "price" (we use entry1 values from the first strategy)
+      const benchByDate = new Map(benchmarkStrategy.trades.map(t => [t.date, t.entry1]));
+
       for (let index = 0; index < strategies.length; index++) {
         const strategy = strategies[index];
         const tickers = new Set();
@@ -180,6 +187,7 @@
           tickers.add(t.ticker1);
           tickers.add(t.ticker2);
         });
+        tickers.add(benchTicker); // need current price for the final "today" point
         const prices = await fetchPrices([...tickers]);
 
         let capital = 100;
@@ -195,7 +203,12 @@
           const curr = strategy.trades[i];
           const r1 = ((curr.entry1 - prev.entry1) / prev.entry1) * prev.position1;
           const r2 = ((curr.entry2 - prev.entry2) / prev.entry2) * prev.position2;
-          const rb = ((curr.entry1 - prev.entry1) / prev.entry1);
+          
+          const bPrev = benchByDate.get(prev.date);
+          const bCurr = benchByDate.get(curr.date);
+          // If benchmark price is missing for these dates, treat benchmark return as 0 for that step
+          const rb = (bPrev != null && bCurr != null) ? ((bCurr - bPrev) / bPrev) : 0;
+          
           capital *= (1 + r1 + r2);
           b_capital *= (1 + rb);
           returns.push(capital - 100);
@@ -208,7 +221,8 @@
         const last = strategy.trades.at(-1);
         const r1 = ((prices[last.ticker1] - last.entry1) / last.entry1) * last.position1;
         const r2 = ((prices[last.ticker2] - last.entry2) / last.entry2) * last.position2;
-        const rb = ((prices[last.ticker1] - last.entry1) / last.entry1);
+        const bLast = benchByDate.get(last.date);
+        const rb = (bLast != null) ? ((prices[benchTicker] - bLast) / bLast) : 0;
         capital *= (1 + r1 + r2);
         b_capital *= (1 + rb);
         returns.push(capital - 100);
@@ -296,6 +310,7 @@
   </script>
 </body>
 </html>
+
 
 
 
